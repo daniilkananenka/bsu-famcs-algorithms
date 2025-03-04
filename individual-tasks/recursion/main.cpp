@@ -8,6 +8,7 @@ std::ofstream fout("output.txt");
 std::vector<int> arr;
 std::vector<std::vector<int>> multDict;
 std::vector<std::vector<int>> pfDict;
+std::vector<std::vector<int>> results;
 
 ////////////////////// Get Weight of station-path in [begin-station, end-station)
 int getPathSum(int begin, int end)
@@ -15,30 +16,6 @@ int getPathSum(int begin, int end)
     int pfBegin = begin + 1;
     int pfEnd = end + 1;
     return pfDict[pfEnd - 1][pfEnd - 1] - pfDict[pfBegin - 1][pfEnd - 1] - pfDict[pfEnd - 1][pfBegin - 1] + pfDict[pfBegin - 1][pfBegin - 1];
-}
-
-int optimal(int begin, int end, int boomCount)
-{
-    if (end - begin == 1)
-    {
-        return getPathSum(begin, end);
-    }
-    if (boomCount == 0)
-    {
-        return getPathSum(begin, end);
-    }
-
-    int min = -1;
-    int current = 0;
-    for (int i = begin + 1; i < end - boomCount + 1; ++i)
-    {
-        current = optimal(begin, i, 0) + optimal(i, end, boomCount - 1);
-        if (min > current || min == -1)
-        {
-            min = current;
-        }
-    }
-    return min;
 }
 
 int main()
@@ -90,9 +67,40 @@ int main()
     }
 
     ////////////////////// Count optimal
-    int res = optimal(0, n, m);
+    results.resize(n, std::vector<int>(m + 1, -1));
 
-    fout << res;
+    int countElements = 0;
+    int countIntervals = 0;
+
+    for (int i = 0; i < n; ++i)
+    { // number of elements
+        for (int j = 0; j < m + 1; ++j)
+        { // number of intervals
+            countElements = i + 1;
+            countIntervals = j + 1;
+
+            if (countIntervals == 1)
+            {
+                results[i][j] = getPathSum(0, countElements);
+                continue;
+            }
+            if (countIntervals > countElements)
+            {
+                results[i][j] = -1;
+                continue;
+            }
+
+            for (int k = i - 1; k >= 0 && results[k][j - 1] != -1; --k)
+            {
+                int cur = results[k][j - 1] + getPathSum(k + 1, i + 1);
+                if (results[i][j] == -1 || results[i][j] > cur)
+                {
+                    results[i][j] = cur;
+                }
+            }
+        }
+    }
+    fout << results[n - 1][m];
 
     return 0;
 }
